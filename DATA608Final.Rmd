@@ -1,0 +1,90 @@
+---
+title: "Final Project"
+author: "Tyler Brown"
+date: "2023-05-10"
+output: pdf_document
+---
+
+## Load the Data
+
+```{r}
+library(RSocrata)
+library(dplyr)
+library(plyr)
+library(plotly)
+library(kableExtra)
+library(ggplot2)
+library(gridExtra)
+```
+
+```{r}
+nyc_shooting = read.socrata("https://data.cityofnewyork.us/resource/833y-fsy8.json")
+```
+
+## Data Analysis
+
+```{r}
+print(dim(nyc_shooting))
+```
+
+```{r}
+colnames(nyc_shooting)
+```
+
+```{r}
+nyc_perp_vic = nyc_shooting[,c("perp_race","vic_race")]
+nyc_perp_vic = nyc_perp_vic[!(is.na(nyc_perp_vic$vic_race) | 
+                      nyc_perp_vic$vic_race=="(null)" |
+                      is.na(nyc_perp_vic$perp_race) | 
+                      nyc_perp_vic$perp_race=="(null)"),]
+nyc_perp_vic = nyc_perp_vic[!(nyc_perp_vic$vic_race=="UNKNOWN" |
+                                nyc_perp_vic$perp_race=="UNKNOWN"),]
+nyc_perp_vic
+```
+
+```{r}
+perp = nyc_perp_vic$perp_race
+vic = nyc_perp_vic$vic_race
+```
+
+```{r}
+table(perp); table(vic)
+```
+
+
+```{r}
+col1 = c(rep("PERP"), rep("VIC"))
+col2 = c(perp, vic)
+
+results = cbind(col1, col2)
+
+race = data.frame(Race = factor(col1, levels = c("PERP","VIC")),
+                  Result = col2)
+
+table(race)
+```
+
+```{r}
+races = data.frame(table(race))
+```
+
+## Visualization
+
+```{r}
+ggplot(data=races, aes(x=Freq, y=Result, fill=Race)) +
+  geom_bar(stat="identity", position=position_dodge(), alpha=0.75) +
+  geom_text(aes(label=Freq), fontface="bold", vjust=1.5,
+            position=position_dodge(.9), size=4) +
+  labs(x="Frequency\n", y="\n Race", title="\n Racial Shootings \n") +
+  theme(axis.title.x=element_text(face="bold", colour="black", size=12),
+        axis.title.y=element_text(face="bold", colour="black", size=12),
+        legend.title=element_text(face="bold", size=10),
+        panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+        panel.background=element_blank(), axis.line=element_line(colour="black"))
+```
+
+## Summary
+
+The New York Police Department Shooting Incident Data gathered from [NYC Open Data](https://data.cityofnewyork.us/Public-Safety/NYPD-Shooting-Incident-Data-Historic-/833y-fsy8). The data is comprised of shootings occurring in NYC from 2006 to the end of 2022. It was manually extracted and reviewed by the Office of Management Analysis and Planning. It was then posted on the NYPD website. The data shows information regarding date and time, borough occurred in, precinct involved, perpetrator's general information, victim's general information, and coordinates. I've broken down the data only related to the race of both perpetrators and victims to identify the more common races involved in shootings within NYC. 
+
+As of September 1, 2022, NYC passed a Concealed Carry Firearm Law, which allows more firearms in certain public locations throughout the city. Guns arguably enables violence within this once gun-free city. But how often have shootings been committed prior to this law coming into effect. As shown in the plot, over 10,000 of shootings occurred among the black community both as perpetrators and victims, followed by white hispanics with 2,400 and black hispanics with 1,400. This data tells us shootings occurred within the city prior to having a law in place, which runs a higher risk of more shootings occurring after legalizing firearms. Authorities have attempted to create an extensive investigation process in permitting citizens to carry and designated the highest populated area within the city a gun-free zone, Time Square. But will it be enough?
